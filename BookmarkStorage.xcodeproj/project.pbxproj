@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5F316C1A1EAC008A00B30247 /* FileManager+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F316C191EAC008A00B30247 /* FileManager+Extensions.swift */; };
 		5FEA5A471D7CA2B900802B18 /* BookmarkStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 5FEA5A451D7CA2B900802B18 /* BookmarkStorage.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FEA5A5A1D7CA35600802B18 /* URLAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEA5A591D7CA35600802B18 /* URLAccess.swift */; };
 		5FEA5A5C1D7CA39600802B18 /* BookmarkStorageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEA5A5B1D7CA39600802B18 /* BookmarkStorageDelegate.swift */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5F316C191EAC008A00B30247 /* FileManager+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "FileManager+Extensions.swift"; sourceTree = "<group>"; };
 		5FEA5A421D7CA2B900802B18 /* BookmarkStorage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BookmarkStorage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FEA5A451D7CA2B900802B18 /* BookmarkStorage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BookmarkStorage.h; sourceTree = "<group>"; };
 		5FEA5A461D7CA2B900802B18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -63,6 +65,7 @@
 				5FEA5A5D1D7CA3B900802B18 /* UserDefaultsBookmarkStorageDelegate.swift */,
 				5FEA5A5F1D7CA3D000802B18 /* BookmarkStorageError.swift */,
 				5FEA5A611D7CA3F600802B18 /* BookmarkStore.swift */,
+				5F316C191EAC008A00B30247 /* FileManager+Extensions.swift */,
 			);
 			path = BookmarkStorage;
 			sourceTree = "<group>";
@@ -153,6 +156,7 @@
 				5FEA5A5E1D7CA3BA00802B18 /* UserDefaultsBookmarkStorageDelegate.swift in Sources */,
 				5FEA5A601D7CA3D000802B18 /* BookmarkStorageError.swift in Sources */,
 				5FEA5A5A1D7CA35600802B18 /* URLAccess.swift in Sources */,
+				5F316C1A1EAC008A00B30247 /* FileManager+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

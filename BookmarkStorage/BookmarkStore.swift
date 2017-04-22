@@ -42,10 +42,7 @@ public struct BookmarkStore {
     
     private static var knownAccessibleDirectoryURLs:[URL] = {
         do {
-            let applicationSupportURL = try FileManager.default.url(for: .applicationSupportDirectory,
-                                                                    in: .userDomainMask,
-                                                                    appropriateFor: nil,
-                                                                    create: true)
+            let applicationSupportURL = try FileManager.default.applicationSupportDirectoryURL()
             
             let cachesURL = try FileManager.default.url(for: .cachesDirectory,
                                                         in: .userDomainMask,
