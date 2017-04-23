@@ -10,18 +10,30 @@ import Foundation
 
 public extension FileManager {
     
+    enum Error: Swift.Error {
+        case bundleNotIdentifiable(Bundle)
+    }
+    
     public func applicationSupportDirectoryURL() throws -> URL {
+        guard let identifier = Bundle.main.bundleIdentifier ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleExecutable") as? String else {
+            throw Error.bundleNotIdentifiable(Bundle.main)
+        }
+        
         return try self.url(for: .applicationSupportDirectory,
                             in: .userDomainMask,
                             appropriateFor: nil,
-                            create: true)
+                            create: true).appendingPathComponent(identifier)
     }
     
     public func cachesDirectoryURL() throws -> URL {
+        guard let identifier = Bundle.main.bundleIdentifier ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleExecutable") as? String else {
+            throw Error.bundleNotIdentifiable(Bundle.main)
+        }
+        
         return try self.url(for: .cachesDirectory,
                             in: .userDomainMask,
                             appropriateFor: nil,
-                            create: true)
+                            create: true).appendingPathComponent(identifier)
     }
     
 }
