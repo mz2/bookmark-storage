@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct URLAccessOptions:OptionSet {
+public struct URLAccessOptions: OptionSet {
     public let rawValue: Int
     
     public init(rawValue: Int) {
@@ -16,27 +16,28 @@ public struct URLAccessOptions:OptionSet {
     }
     
     public static let groupAccessByParentDirectoryURL = URLAccessOptions(rawValue:1 << 0)
-    public static let alwaysAskForAccessToParentDirectory = URLAccessOptions(rawValue: 1 << 1)
+    public static let askForAccessToParentDirectory = URLAccessOptions(rawValue: 1 << 1)
+    public static let urlMayNotExistYet = URLAccessOptions(rawValue: (URLAccessOptions.askForAccessToParentDirectory.rawValue | (1 << 2)))
 };
 
 /** Return nil if access was what you would define as success, error otherwise. */
-public typealias URLAccessHandler = (URLAccess) -> Error?
+public typealias URLAccessHandler = (URLAccess) throws -> Void
 
 public protocol URLAccess {
     /** Return all URLs that will require security-scoped access. */
-    var URLs:[URL] { get }
+    var urls: [URL] { get }
 }
 
 public struct SimpleURLAccess : URLAccess {
-    public let URLs:[URL]
+    public let urls:[URL]
     
-    public init(URLs:[URL]) {
-        self.URLs = URLs
+    public init(urls:[URL]) {
+        self.urls = urls
     }
 }
 
 public enum SecurityScopeAccessOutcome {
-    case success(bookmarkData:Data)
+    case success(bookmarkData: Data)
     case cancelled
     case failure
 }

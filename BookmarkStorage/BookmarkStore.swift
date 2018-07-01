@@ -12,7 +12,7 @@ import Cocoa
 public struct BookmarkStore {
 
     /** Return default bookmark store instance that uses user defaults for bookmark storage. */
-    static let defaultStore:BookmarkStore = BookmarkStore(delegate:UserDefaultsBookmarkStorageDelegate())
+    public static let defaultStore: BookmarkStore = BookmarkStore(delegate:UserDefaultsBookmarkStorageDelegate())
     
     private(set) public var delegate:BookmarkStorageDelegate
     
@@ -62,28 +62,27 @@ public struct BookmarkStore {
                                                          alwaysAskForParentURLAccess alwaysAccessParentURL:Bool)
         throws -> [URL]
     {
-        let inaccessibleURLs = URLs.filter { URL in
-            return self.knownAccessibleDirectoryURLs.index { accessibleURL in
-                return URL.path.hasPrefix(accessibleURL.path)
-                } != nil
+        let possiblyInaccessibleURLs = URLs.filter { url in
+            return self.knownAccessibleDirectoryURLs.first(where: { accessibleURL in
+                return url.path.hasPrefix(accessibleURL.path)
+            }) == nil // Not contained by any known sandbox-accessible directory
         }
         
-        if inaccessibleURLs.count == 0 {
+        if possiblyInaccessibleURLs.count == 0 {
             return []
         }
         
         if !allowGrouping {
-            return inaccessibleURLs
+            return possiblyInaccessibleURLs
         }
         
-        let groupedURLs = self.URLsGroupedByAbsoluteParentURLStrings(URLs: inaccessibleURLs)
+        let groupedURLs = URLsGroupedByAbsoluteParentURLStrings(URLs: possiblyInaccessibleURLs)
         
-        // TODO: should filter out URLs that are contained by other URLs in the array
-        return groupedURLs.flatMap { (absoluteParentURLString, URLs) -> URL? in
+        let uniqueURLs: [URL] = groupedURLs.flatMap { (absoluteParentURLString, URLs) -> URL? in
             // If there are multiple URLs to access in a common parent folder,
             // we'll request access for that folder
             if (alwaysAccessParentURL || URLs.count > 1) {
-                return URL(string:absoluteParentURLString)
+                return URL(string: absoluteParentURLString)
             }
                 // Otherwise, we'll request access for the sole URL
             else if (URLs.count == 1) {
@@ -92,6 +91,18 @@ public struct BookmarkStore {
             
             return nil
         }
+        
+        // Filter out sub-URLs of URLs in the array
+        let urls: [URL] = uniqueURLs.flatMap { url in
+            if let _: URL = uniqueURLs.first(where: { ancestorCandidateURL in
+                return url != ancestorCandidateURL && url.absoluteString.hasPrefix(ancestorCandidateURL.absoluteString)
+            }) {
+                return nil
+            }
+            return url
+        }
+        
+        return urls
     }
     
     /** Determine which URLs aren't yet covered by a bookmark that we have stored by the storage delegate. */
@@ -165,17 +176,19 @@ public struct BookmarkStore {
         return nil
     }
     
-    public func promptUserForSecurityScopedAccess(toURL URL:URL,
-                                           withTitle title:String,
-                                           message:String,
-                                           prompt:String = "Choose") throws -> SecurityScopeAccessOutcome
+    public func promptUserForSecurityScopedAccess(
+        toURL URL:URL,
+        withTitle title: String,
+        message: String,
+        prompt: String = "Choose",
+        options: URLAccessOptions) throws -> SecurityScopeAccessOutcome
     {
         var isProbablyADirectory:ObjCBool = false
         let path = URL.path
         let pathExtension = URL.pathExtension
         let uti = self.UTI(forPathExtension: pathExtension)
         
-        if !FileManager.default.fileExists(atPath:path, isDirectory:&isProbablyADirectory) {
+        if !options.contains(.urlMayNotExistYet) && !FileManager.default.fileExists(atPath:path, isDirectory:&isProbablyADirectory) {
             return .failure
         }
         
@@ -211,7 +224,7 @@ public struct BookmarkStore {
         repeat {
             let result = panel.runModal()
             
-            if result != NSModalResponseStop {
+            if result != NSModalResponseOK {
                 return .cancelled
             }
             
@@ -255,25 +268,25 @@ public struct BookmarkStore {
                            accessHandler:URLAccessHandler) throws {
         
         // Gather all URLs that will be accessed
-        let allURLsToAccess = URLAccessObjects.flatMap { $0.URLs }
+        let allURLsToAccess = URLAccessObjects.flatMap { $0.urls }
         
-        let URLsNeedingSecurityScopedAccess
-            = try type(of: self)
-                .uniqueURLsRequiringSecurityScope(URLs: allURLsToAccess,
-                                                  allowGroupingByParentURL:
-                    options.contains(URLAccessOptions.groupAccessByParentDirectoryURL),
-                                                  alwaysAskForParentURLAccess:
-                    options.contains(URLAccessOptions.alwaysAskForAccessToParentDirectory))
+        let URLsNeedingSecurityScopedAccess = try type(of: self).uniqueURLsRequiringSecurityScope(
+            URLs: allURLsToAccess,
+            allowGroupingByParentURL: options.contains(URLAccessOptions.groupAccessByParentDirectoryURL),
+            alwaysAskForParentURLAccess: options.contains(URLAccessOptions.askForAccessToParentDirectory)
+        )
         
         let (URLsToBookmark, _)
             = try self.URLsRequiringSecurityScope(amongstURLs: URLsNeedingSecurityScopedAccess)
         
         // Ask user to pick URLs we need access to
         for URL in URLsToBookmark {
-            let result = try self.promptUserForSecurityScopedAccess(toURL: URL,
-                                                                    withTitle: openPanelTitle,
-                                                                    message: openPanelDescription,
-                                                                    prompt:prompt)
+            let result = try promptUserForSecurityScopedAccess(
+                toURL: URL,
+                withTitle: openPanelTitle,
+                message: openPanelDescription,
+                prompt: prompt,
+                options: options)
             
             switch result {
             case .success(let bookmarkData):
@@ -288,9 +301,7 @@ public struct BookmarkStore {
         }
         
         for accessObject in URLAccessObjects {
-            if let accessError = accessHandler(accessObject) {
-                throw accessError
-            }
+            try accessHandler(accessObject)
         }
     }
     
