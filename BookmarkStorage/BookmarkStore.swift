@@ -93,7 +93,7 @@ public struct BookmarkStore {
         }
         
         // Filter out sub-URLs of URLs in the array
-        let urls: [URL] = uniqueURLs.flatMap { url in
+        let urls: [URL] = uniqueURLs.compactMap { url in
             if let _: URL = uniqueURLs.first(where: { ancestorCandidateURL in
                 return url != ancestorCandidateURL && url.absoluteString.hasPrefix(ancestorCandidateURL.absoluteString)
             }) {
