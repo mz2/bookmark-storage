@@ -36,4 +36,13 @@ public extension FileManager {
                             create: true).appendingPathComponent(identifier)
     }
     
+    /**
+     Return UTI for a given path extension.
+     */
+    class func fileType(forPathExtension pathExtension: String) -> String? {
+        if let UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension.lowercased() as CFString, nil) {
+            return String(UTI.takeUnretainedValue())
+        }
+        return nil
+    }
 }

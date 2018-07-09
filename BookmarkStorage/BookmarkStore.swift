@@ -167,15 +167,6 @@ public struct BookmarkStore {
         return firstInodeNumber == otherInodeNumber
     }
     
-    func UTI(forPathExtension pathExtension: String) -> String?
-    {
-        if let UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
-                                                           pathExtension.lowercased() as CFString, nil) {
-            return String(UTI.takeUnretainedValue())
-        }
-        return nil
-    }
-    
     public func promptUserForSecurityScopedAccess(
         toURL URL:URL,
         withTitle title: String,
@@ -186,7 +177,7 @@ public struct BookmarkStore {
         var isProbablyADirectory:ObjCBool = false
         let path = URL.path
         let pathExtension = URL.pathExtension
-        let uti = self.UTI(forPathExtension: pathExtension)
+        let uti = FileManager.fileType(forPathExtension: pathExtension)
         
         if !options.contains(.urlMayNotExistYet) && !FileManager.default.fileExists(atPath:path, isDirectory:&isProbablyADirectory) {
             return .failure
