@@ -10,8 +10,26 @@ import Foundation
 
 public extension FileManager {
     
-    enum Error: Swift.Error {
+    enum Error: Swift.Error, LocalizedError, CustomNSError {
         case bundleNotIdentifiable(Bundle)
+
+        public var errorCode: Int {
+            switch self {
+            case .bundleNotIdentifiable:
+                return 1
+            }
+        }
+
+        public var localizedDescription: String {
+            switch self {
+            case .bundleNotIdentifiable(let bundle):
+                return [ NSLocalizedDescriptionKey: "Bundle at URL \(bundle.bundleURL) is not identifiable"
+            }
+        }
+
+        public var recoverySuggestion: String? {
+            return "Please contact support if this persists."
+        }
     }
     
     public func applicationSupportDirectoryURL() throws -> URL {
