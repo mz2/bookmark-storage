@@ -23,7 +23,7 @@ public extension FileManager {
         public var localizedDescription: String {
             switch self {
             case .bundleNotIdentifiable(let bundle):
-                return [ NSLocalizedDescriptionKey: "Bundle at URL \(bundle.bundleURL) is not identifiable"
+                return "Bundle at URL \(bundle.bundleURL) is not identifiable"
             }
         }
 
