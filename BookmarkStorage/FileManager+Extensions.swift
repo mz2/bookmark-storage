@@ -28,7 +28,7 @@ public extension FileManager {
         }
 
         public var recoverySuggestion: String? {
-            return "Please contact support if this persists."
+            return "Please contact support if this problem persists."
         }
     }
     

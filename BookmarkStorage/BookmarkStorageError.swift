@@ -59,6 +59,6 @@ public enum BookmarkStorageError: Swift.Error, LocalizedError {
     }
 
     public var recoverySuggestion: String? {
-        return "Please contact support if this issue persists."
+        return "Please contact support if this problem persists."
     }
 }
