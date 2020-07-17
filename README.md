@@ -28,19 +28,19 @@ Adapting from a test included in the test suite for the framework, here's how yo
 
 1. Construct a `BookmarkStore`:
 
-```
+```swift
 let bookmarkStore = BookmarkStore(delegate:UserDefaultsBookmarkStorageDelegate())
 ```
 
 2. Wrap the URL(s) you wish to access into an object conforming to `URLAccess`. A reference `SimpleURLAccess` struct is provided:
 
-```
+```swift
 let URLAccess = SimpleURLAccess()
 ```
 
 3. Access the URL:
 
-```
+```swift
 // The `description` argument accepts template strings that are replaced automatically if encountered as a substring in the paramter value.
 // ${likelyFileKind}: either 'file' or 'folder' based on whether the file is thought to be a folder or not.
 // ${filename}: the filename (last path component of the URL being requested may be the containing folder or the file passed in as the URL to access)
