@@ -32,7 +32,7 @@ public extension FileManager {
         }
     }
     
-    public func applicationSupportDirectoryURL() throws -> URL {
+    func applicationSupportDirectoryURL() throws -> URL {
         guard let identifier = Bundle.main.bundleIdentifier ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleExecutable") as? String else {
             throw Error.bundleNotIdentifiable(Bundle.main)
         }
@@ -43,7 +43,7 @@ public extension FileManager {
                             create: true).appendingPathComponent(identifier)
     }
     
-    public func cachesDirectoryURL() throws -> URL {
+    func cachesDirectoryURL() throws -> URL {
         guard let identifier = Bundle.main.bundleIdentifier ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleExecutable") as? String else {
             throw Error.bundleNotIdentifiable(Bundle.main)
         }
