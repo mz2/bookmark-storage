@@ -7,9 +7,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#endif
 
 public extension FileManager {
-    
     enum Error: Swift.Error, LocalizedError, CustomNSError {
         case bundleNotIdentifiable(Bundle)
 
@@ -54,6 +56,7 @@ public extension FileManager {
                             create: true).appendingPathComponent(identifier)
     }
     
+#if os(macOS)
     /**
      Return UTI for a given path extension.
      */
@@ -63,4 +66,5 @@ public extension FileManager {
         }
         return nil
     }
+#endif
 }
