@@ -6,20 +6,19 @@
 //  Copyright © 2016 Matias Piipari & Co. All rights reserved.
 //
 
-import Cocoa
-
+import Foundation
+#if os(macOS)
+import AppKit
+#endif
 
 public struct BookmarkStore {
-
     /** Return default bookmark store instance that uses user defaults for bookmark storage. */
     public static let defaultStore: BookmarkStore = BookmarkStore(delegate:UserDefaultsBookmarkStorageDelegate())
     
     private(set) public var delegate:BookmarkStorageDelegate
     
-    
     /** Return dictionary with parent URL absolute strings as keys, and arrays of URLs as values. */
-    private static func URLsGroupedByAbsoluteParentURLStrings(URLs:[URL]) -> [String:[URL]] {
-        
+    private static func urlsGroupedByAbsoluteParentURLStrings(URLs: [URL]) -> [String: [URL]] {
         var groupedURLs = [String:[URL]]()
         
         for URL in URLs {
@@ -76,7 +75,7 @@ public struct BookmarkStore {
             return possiblyInaccessibleURLs
         }
         
-        let groupedURLs = URLsGroupedByAbsoluteParentURLStrings(URLs: possiblyInaccessibleURLs)
+        let groupedURLs = urlsGroupedByAbsoluteParentURLStrings(URLs: possiblyInaccessibleURLs)
         
         let uniqueURLs: [URL] = groupedURLs.compactMap { (absoluteParentURLString, URLs) -> URL? in
             // If there are multiple URLs to access in a common parent folder,
@@ -106,29 +105,32 @@ public struct BookmarkStore {
     }
     
     /** Determine which URLs aren't yet covered by a bookmark that we have stored by the storage delegate. */
-    public func URLsRequiringSecurityScope(amongstURLs URLs:[URL]) throws -> (withoutBookmark: [URL], securityScoped: [URL]) {
-        
+    public func urlsRequiringSecurityScope(amongstURLs urls: [URL]) throws -> (withoutBookmark: [URL], securityScoped: [URL]) {
         let allBookmarks = try self.delegate.allBookmarkDataByAbsoluteURLString()
         
-        var URLsWithoutBookmarks = [URL]()
+        var urlsWithoutBookmarks = [URL]()
         var securityScopedURLs = [URL]()
         
-        for URL in URLs {
+        for url in urls {
             var found = false
             
             for absoluteBookmarkedURLString in allBookmarks.keys {
-                
-                if (URL.absoluteString.hasPrefix(absoluteBookmarkedURLString)) {
+                if (url.absoluteString.hasPrefix(absoluteBookmarkedURLString)) {
                     // Only way to know if the bookmark will actually work is to try resolving & starting access
+#if os(iOS)
+                    let options: URL.BookmarkResolutionOptions = []
+#elseif os(macOS)
+                    let options: URL.BookmarkResolutionOptions = [.withSecurityScope]
+#endif
+                    var isStale = false
+                    let securityScopedURL = try URL(
+                        resolvingBookmarkData: allBookmarks[absoluteBookmarkedURLString]!,
+                        options: options,
+                        relativeTo: nil,
+                        bookmarkDataIsStale: &isStale)
                     
-                    var isStale: ObjCBool = false
-                    let securityScopedURL = try NSURL(resolvingBookmarkData: allBookmarks[absoluteBookmarkedURLString]!,
-                                                      options: NSURL.BookmarkResolutionOptions.withSecurityScope,
-                                                      relativeTo: nil,
-                                                      bookmarkDataIsStale: &isStale)
-                    
-                    if securityScopedURL.startAccessingSecurityScopedResource() {
-                        securityScopedURLs.append(securityScopedURL as URL)
+                    if !isStale && securityScopedURL.startAccessingSecurityScopedResource() {
+                        securityScopedURLs.append(securityScopedURL)
                         found = true
                     }
                     else {
@@ -138,11 +140,11 @@ public struct BookmarkStore {
             }
             
             if !found {
-                URLsWithoutBookmarks.append(URL)
+                urlsWithoutBookmarks.append(url)
             }
         }
         
-        return (withoutBookmark: URLsWithoutBookmarks, securityScoped:securityScopedURLs)
+        return (withoutBookmark: urlsWithoutBookmarks, securityScoped: securityScopedURLs)
     }
     
     private static func fileURL(_ URL:URL, isEqualToFileURL otherURL:URL) throws -> Bool {
@@ -167,6 +169,7 @@ public struct BookmarkStore {
         return firstInodeNumber == otherInodeNumber
     }
     
+#if os(macOS)
     public func promptUserForSecurityScopedAccess(
         toURL URL:URL,
         withTitle title: String,
@@ -249,31 +252,33 @@ public struct BookmarkStore {
                                                           relativeTo: nil)
         return .success(bookmarkData: data)
     }
+#endif
     
     /** Read from, or write to, given URLs with security-scoped access. */
-    public func accessURLs(_ URLAccessObjects:[URLAccess],
-                           withUserPromptTitle openPanelTitle:String,
-                           description openPanelDescription:String,
-                           prompt:String,
-                           options:URLAccessOptions,
-                           accessHandler:URLAccessHandler) throws {
+    public func accessURLs(_ urlAccessObjects: [URLAccess],
+                           withUserPromptTitle openPanelTitle: String,
+                           description openPanelDescription: String,
+                           prompt: String,
+                           options: URLAccessOptions,
+                           accessHandler: URLAccessHandler) throws {
         
         // Gather all URLs that will be accessed
-        let allURLsToAccess = URLAccessObjects.flatMap { $0.urls }
+        let allURLsToAccess = urlAccessObjects.flatMap { $0.urls }
         
-        let URLsNeedingSecurityScopedAccess = try type(of: self).uniqueURLsRequiringSecurityScope(
+        let urlsNeedingSecurityScopedAccess = try type(of: self).uniqueURLsRequiringSecurityScope(
             URLs: allURLsToAccess,
             allowGroupingByParentURL: options.contains(URLAccessOptions.groupAccessByParentDirectoryURL),
             alwaysAskForParentURLAccess: options.contains(URLAccessOptions.askForAccessToParentDirectory)
         )
         
-        let (URLsToBookmark, _)
-            = try self.URLsRequiringSecurityScope(amongstURLs: URLsNeedingSecurityScopedAccess)
+        let (urlsToBookmark, _)
+            = try self.urlsRequiringSecurityScope(amongstURLs: urlsNeedingSecurityScopedAccess)
         
+#if os(macOS)
         // Ask user to pick URLs we need access to
-        for URL in URLsToBookmark {
+        for url in urlsToBookmark {
             let result = try promptUserForSecurityScopedAccess(
-                toURL: URL,
+                toURL: url,
                 withTitle: openPanelTitle,
                 message: openPanelDescription,
                 prompt: prompt,
@@ -281,7 +286,7 @@ public struct BookmarkStore {
             
             switch result {
             case .success(let bookmarkData):
-                try self.delegate.saveBookmark(data: bookmarkData, forURL: URL)
+                try self.delegate.saveBookmark(data: bookmarkData, forURL: url)
                 
             case .cancelled:
                 throw BookmarkStorageError.userCancelled
@@ -290,11 +295,11 @@ public struct BookmarkStore {
                 break
             }
         }
+#endif
         
-        for accessObject in URLAccessObjects {
+        for accessObject in urlAccessObjects {
             try accessHandler(accessObject)
+            accessObject.urls.forEach { $0.stopAccessingSecurityScopedResource() }
         }
     }
-    
-    // TODO: stop accessing security-scoped URLs resolved above?
 }
