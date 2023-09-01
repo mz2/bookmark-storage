@@ -15,7 +15,7 @@ public struct BookmarkStore {
     /** Return default bookmark store instance that uses user defaults for bookmark storage. */
     public static let defaultStore: BookmarkStore = BookmarkStore(delegate:UserDefaultsBookmarkStorageDelegate())
     
-    private(set) public var delegate:BookmarkStorageDelegate
+    private(set) public var delegate: BookmarkStorageDelegate
     
     /** Return dictionary with parent URL absolute strings as keys, and arrays of URLs as values. */
     private static func urlsGroupedByAbsoluteParentURLStrings(URLs: [URL]) -> [String: [URL]] {
@@ -148,7 +148,6 @@ public struct BookmarkStore {
     }
     
     private static func fileURL(_ URL:URL, isEqualToFileURL otherURL:URL) throws -> Bool {
-        
         //
         // Note: yes, we are aware that if either URL required security-scoped access, the following can only return YES if that access is already granted, as retrieving the properties of a file won't succeed otherwise. TODO: might need to rename this method to reflect that, so that it isn't copied to some other context where that matters.
         //
@@ -167,6 +166,10 @@ public struct BookmarkStore {
         }
         
         return firstInodeNumber == otherInodeNumber
+    }
+    
+    public init(delegate: BookmarkStorageDelegate) {
+        self.delegate = delegate
     }
     
 #if os(macOS)
