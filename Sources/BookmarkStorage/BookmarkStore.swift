@@ -132,6 +132,7 @@ public struct BookmarkStore {
                     if !isStale && securityScopedURL.startAccessingSecurityScopedResource() {
                         securityScopedURLs.append(securityScopedURL)
                         found = true
+                        break
                     }
                     else {
                         // TODO: ask storage delegate to remove failed bookmark data here!
@@ -140,7 +141,9 @@ public struct BookmarkStore {
             }
             
             if !found {
-                urlsWithoutBookmarks.append(url)
+                if !url.startAccessingSecurityScopedResource() {
+                    urlsWithoutBookmarks.append(url)
+                }
             }
         }
         
